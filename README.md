@@ -43,33 +43,33 @@ Edit the cssh bash script file.
 
 Change the following shell script lines to use template matching strings that reflect the naming convention of your servers' hostnames. For example, if the hostnames of your master nodes are:
 
-     hadoopcluster1namenode1.mydomain.com
-     hadoopcluster1namenode2.mydomain.com
-     hadoopcluster1namenode3.mydomain.com
+     hadoopcluster1namenode1.mycompany.com
+     hadoopcluster1namenode2.mycompany.com
+     hadoopcluster1namenode3.mycompany.com
 
 then you would define the EDGE_NODES_HOSTNAME_TEMPLATE shell variable as:
 
-     EDGE_NODES_HOSTNAME_TEMPLATE="hadoopcluster1master[].mydomain.com"
+     EDGE_NODES_HOSTNAME_TEMPLATE="hadoopcluster1master[].mycompany.com"
 
 Similarly, if the hostnames of your worker nodes are:
 
-     hadoopcluster1datanode1.mydomain.com
-     hadoopcluster1datanode2.mydomain.com
-     hadoopcluster1datanode3.mydomain.com
+     hadoopcluster1datanode1.mycompany.com
+     hadoopcluster1datanode2.mycompany.com
+     hadoopcluster1datanode3.mycompany.com
 
 then you would define the NAME_NODES_HOSTNAME_TEMPLATE shell variable as:
 
-     NAME_NODES_HOSTNAME_TEMPLATE="hadoopcluster1datanode[].mydomain.com"
+     NAME_NODES_HOSTNAME_TEMPLATE="hadoopcluster1datanode[].mycompany.com"
 
 Finally, if the hostnames of your edge node (or access nodes) are:
 
-     hadoopcluster1edgenode1.mydomain.com
-     hadoopcluster1edgenode2.mydomain.com
-     hadoopcluster1edgenode3.mydomain.com
+     hadoopcluster1edgenode1.mycompany.com
+     hadoopcluster1edgenode2.mycompany.com
+     hadoopcluster1edgenode3.mycompany.com
 
 then you would define the DATA_NODES_HOSTNAME_TEMPLATE shell variable as:
 
-     DATA_NODES_HOSTNAME_TEMPLATE="hadoopcluster1edgenode[].mydomain.com"
+     DATA_NODES_HOSTNAME_TEMPLATE="hadoopcluster1edgenode[].mycompany.com"
 
 Additionally, you must configure the number of edge nodes, master nodes and worker nodes by change the values of these shell variables:
 
@@ -145,9 +145,11 @@ If needed, install crony
      $ cssh "systemctl start chronyd.service && systemctl enable chronyd.service"
 
 Check if crony is referencing time sources
+
      $ cssh "chronyc sources"
 
 Check if crony is tracking
+
      $ cssh "chronyc tracking"
 
 
@@ -195,31 +197,33 @@ EOF
 
 Restrict monitor access to the ldapadm user. Change the following configuration with your domain information (mycompany.com):
 
-     $ cat > /tmp/monitor.ldif <<EOF
+```
+$ cat > /tmp/monitor.ldif <<EOF
 dn: olcDatabase={1}monitor,cn=config
 changetype: modify
 replace: olcAccess
 olcAccess: {0}to * by dn.base="gidNumber=0+uidNumber=0,cn=peercred,cn=external, cn=auth" read by dn.base="cn=ldapadm,dc=local,dc=net" read by * none
 EOF
+```
 
      $ ldapmodify -Y EXTERNAL -H ldapi:/// -f /tmp/monitor.ldif
 
  Create an SSL cert to connect with
 
-     $ openssl req -new -x509 -nodes -out /etc/openldap/certs/ldap.mydomain.com.cert -keyout /etc/openldap/certs/ldap.mydomain.com.key -days 365
-     $ chown ldap:ldap /etc/openldap/certs/ldap.mydomain.com.*
+     $ openssl req -new -x509 -nodes -out /etc/openldap/certs/ldap.mycompany.com.cert -keyout /etc/openldap/certs/ldap.mycompany.com.key -days 365
+     $ chown ldap:ldap /etc/openldap/certs/ldap.mycompany.com.*
 
 ```
 $ cat > /tmp/certs.ldif <<EOF
 dn: cn=config
 changetype: modify
 replace: olcTLSCertificateFile
-olcTLSCertificateFile: /etc/openldap/certs/ldap.mydomain.com.cert
+olcTLSCertificateFile: /etc/openldap/certs/ldap.mycompany.com.cert
 
 dn: cn=config
 changetype: modify
 replace: olcTLSCertificateKeyFile
-olcTLSCertificateKeyFile: /etc/openldap/certs/ldap.mydomain.com.key
+olcTLSCertificateKeyFile: /etc/openldap/certs/ldap.mycompany.com.key
 EOF
 ```
      $ ldapmodify -Y EXTERNAL -H ldapi:/// -f /tmp/certs.ldif
@@ -290,15 +294,15 @@ shadowMin: 0
 shadowMax: 99999
 shadowWarning: 7
 EOF
-``
+```
 	
      $ ldapadd -x -W -D "cn=ldapadm,dc=local,dc=net" -f /tmp/user_myuser.ldif
 
- From any node, list all LDAP users (gets default LDAP svr from /etc/openldap/ldap.conf)
+From any node, list all LDAP users (gets default LDAP svr from /etc/openldap/ldap.conf)
 
      $ 	ldapsearch -x -W -D "cn=ldapadm,dc=local,dc=net" -b dc=local,dc=net 
 
- OR
+OR
 
      $ 	cssh "ldapsearch -x -w changeme -D "cn=ldapadm,dc=local,dc=net" -b dc=local,dc=net | grep uid=" 
 
@@ -351,7 +355,7 @@ $ cat > /var/kerberos/krb5kdc/kdc.conf <<EOF
  kdc_tcp_ports = 88
 
 [realms]
- MYDOMAIN.COM = {
+ MYCOMPANY.COM = {
   #master_key_type = aes256-cts
   acl_file = /var/kerberos/krb5kdc/kadm5.acl
   dict_file = /usr/share/dict/words
@@ -362,7 +366,7 @@ EOF
 
 ```
 $ cat > /var/kerberos/krb5kdc/kadm5.acl <<EOF
-*/admin@MYDOMAIN.COM      *
+*/admin@MYCOMPANY.COM      *
 EOF
 ```
 
@@ -388,18 +392,18 @@ includedir /etc/krb5.conf.d/
  forwardable = true
  rdns = false
  #pkinit_anchors = /etc/pki/tls/certs/ca-bundle.crt
- default_realm = MYDOMAIN.COM
+ default_realm = MYCOMPANY.COM
  default_ccache_name = KEYRING:persistent:%{uid}
 
 [realms]
- MYDOMAIN.COM = {
-  kdc = hadoopcluster1edgenode1.mydomain.com
-  admin_server = hadoopcluster1edgenode1.mydomain.com
+ MYCOMPANY.COM = {
+  kdc = hadoopcluster1edgenode1.mycompany.com
+  admin_server = hadoopcluster1edgenode1.mycompany.com
  }
 
 [domain_realm]
-.mydomain.com = MYDOMAIN.COM
-mydomain.com = MYDOMAIN.COM
+.mycompany.com = MYCOMPANY.COM
+mycompany.com = MYCOMPANY.COM
 
 EOF
 "
@@ -412,7 +416,7 @@ EOF
 
      Create the Kerberos database
 
-     $ kdb5_util create -s -r MYDOMAIN.COM
+     $ kdb5_util create -s -r MYCOMPANY.COM
         <enter password> # changeme
 
      Start the kerberbos service
@@ -441,9 +445,9 @@ EOF
        for svc in hdfs yarn mapred hive hbase HTTP
        do
          if [ "$OP" == "addprinc" ]; then
-           echo "addprinc -randkey ${svc}/hadoopcluster1edgenode${i}.mydomain.com@MYDOMAIN.COM"   | kadmin.local
+           echo "addprinc -randkey ${svc}/hadoopcluster1edgenode${i}.mycompany.com@MYCOMPANY.COM"   | kadmin.local
          else
-           echo "delprinc -force ${svc}/hadoopcluster1edgenode${i}.mydomain.com@MYDOMAIN.COM"    | kadmin.local
+           echo "delprinc -force ${svc}/hadoopcluster1edgenode${i}.mycompany.com@MYCOMPANY.COM"    | kadmin.local
          fi
        done
      done
@@ -454,9 +458,9 @@ EOF
        for svc in hdfs yarn mapred hive hbase HTTP
        do
          if [ "$OP" == "addprinc" ]; then
-           echo "addprinc -randkey ${svc}/hadoopcluster1namenode${i}.mydomain.com@MYDOMAIN.COM"   | kadmin.local
+           echo "addprinc -randkey ${svc}/hadoopcluster1namenode${i}.mycompany.com@MYCOMPANY.COM"   | kadmin.local
          else
-           echo "delprinc -force ${svc}/hadoopcluster1namenode${i}.mydomain.com@MYDOMAIN.COM"    | kadmin.local
+           echo "delprinc -force ${svc}/hadoopcluster1namenode${i}.mycompany.com@MYCOMPANY.COM"    | kadmin.local
          fi
 
        done
@@ -468,9 +472,9 @@ EOF
        for svc in hdfs yarn mapred hive hbase HTTP
        do
          if [ "$OP" == "addprinc" ]; then
-           echo "addprinc -randkey ${svc}/hadoopcluster1datanode${i}.mydomain.com@MYDOMAIN.COM"   | kadmin.local
+           echo "addprinc -randkey ${svc}/hadoopcluster1datanode${i}.mycompany.com@MYCOMPANY.COM"   | kadmin.local
          else
-           echo "delprinc -force ${svc}/hadoopcluster1datanode${i}.mydomain.com@MYDOMAIN.COM"    | kadmin.local
+           echo "delprinc -force ${svc}/hadoopcluster1datanode${i}.mycompany.com@MYCOMPANY.COM"    | kadmin.local
          fi
        done
      done
@@ -491,7 +495,7 @@ EOF
      do
        for svc in hdfs yarn mapred
        do
-         echo "xst -norandkey -k hadoopcluster1edgenode${i}.${svc}.keytab ${svc}/hadoopcluster1edgenode${i}.mydomain.com@MYDOMAIN.COM HTTP/hadoopcluster1edgenode${i}.mydomain.com@MYDOMAIN.COM" | kadmin.local
+         echo "xst -norandkey -k hadoopcluster1edgenode${i}.${svc}.keytab ${svc}/hadoopcluster1edgenode${i}.mycompany.com@MYCOMPANY.COM HTTP/hadoopcluster1edgenode${i}.mycompany.com@MYCOMPANY.COM" | kadmin.local
        done
      done
 
@@ -500,7 +504,7 @@ EOF
      do
        for svc in hdfs yarn mapred
        do
-         echo "xst -norandkey -k hadoopcluster1namenode${i}.${svc}.keytab ${svc}/hadoopcluster1namenode${i}.mydomain.com@MYDOMAIN.COM HTTP/hadoopcluster1namenode${i}.mydomain.com@MYDOMAIN.COM" | kadmin.local
+         echo "xst -norandkey -k hadoopcluster1namenode${i}.${svc}.keytab ${svc}/hadoopcluster1namenode${i}.mycompany.com@MYCOMPANY.COM HTTP/hadoopcluster1namenode${i}.mycompany.com@MYCOMPANY.COM" | kadmin.local
        done
      done
 
@@ -509,7 +513,7 @@ EOF
      do
        for svc in hdfs yarn mapred
        do
-         echo "xst -norandkey -k hadoopcluster1datanode${i}.${svc}.keytab ${svc}/hadoopcluster1datanode${i}.mydomain.com@MYDOMAIN.COM HTTP/hadoopcluster1datanode${i}.mydomain.com@MYDOMAIN.COM" | kadmin.local
+         echo "xst -norandkey -k hadoopcluster1datanode${i}.${svc}.keytab ${svc}/hadoopcluster1datanode${i}.mycompany.com@MYCOMPANY.COM HTTP/hadoopcluster1datanode${i}.mycompany.com@MYCOMPANY.COM" | kadmin.local
        done
      done
 
@@ -539,7 +543,7 @@ EOF
      do
        for svc in hdfs yarn mapred
        do
-         scp -i ~/.ssh/id_rsa_cssh /etc/hadoop/conf/hadoopcluster1edgenode${i}.${svc}.keytab hadoopcluster1edgenode${i}.mydomain.com:/etc/hadoop/conf/keytab/${svc}.keytab
+         scp -i ~/.ssh/id_rsa_cssh /etc/hadoop/conf/hadoopcluster1edgenode${i}.${svc}.keytab hadoopcluster1edgenode${i}.mycompany.com:/etc/hadoop/conf/keytab/${svc}.keytab
        done
      done
 
@@ -547,7 +551,7 @@ EOF
      do
        for svc in hdfs yarn mapred
        do
-         scp -i ~/.ssh/id_rsa_cssh /etc/hadoop/conf/hadoopcluster1namenode${i}.${svc}.keytab hadoopcluster1namenode${i}.mydomain.com:/etc/hadoop/conf/keytab/${svc}.keytab
+         scp -i ~/.ssh/id_rsa_cssh /etc/hadoop/conf/hadoopcluster1namenode${i}.${svc}.keytab hadoopcluster1namenode${i}.mycompany.com:/etc/hadoop/conf/keytab/${svc}.keytab
        done
      done
 
@@ -555,7 +559,7 @@ EOF
      do
        for svc in hdfs yarn mapred
        do
-         scp -i ~/.ssh/id_rsa_cssh /etc/hadoop/conf/hadoopcluster1datanode${i}.${svc}.keytab hadoopcluster1datanode${i}.mydomain.com:/etc/hadoop/conf/keytab/${svc}.keytab
+         scp -i ~/.ssh/id_rsa_cssh /etc/hadoop/conf/hadoopcluster1datanode${i}.${svc}.keytab hadoopcluster1datanode${i}.mycompany.com:/etc/hadoop/conf/keytab/${svc}.keytab
        done
      done
 
@@ -734,7 +738,7 @@ export HADOOP_NAMENODE_OPTS="-XX:+UseParallelGC"
 
   <property>
      <name>ha.zookeeper.quorum</name>
-     <value>hadoopcluster1namenode1.mydomain.com:2181,hadoopcluster1namenode2.mydomain.com:2181,hadoopcluster1namenode3.mydomain.com:2181</value>
+     <value>hadoopcluster1namenode1.mycompany.com:2181,hadoopcluster1namenode2.mycompany.com:2181,hadoopcluster1namenode3.mycompany.com:2181</value>
   </property>
 
   <property>
@@ -888,27 +892,27 @@ export HADOOP_NAMENODE_OPTS="-XX:+UseParallelGC"
 
   <property>
     <name>dfs.namenode.rpc-address.cluster1.nn1</name>
-    <value>hadoopcluster1namenode1.mydomain.com:8020</value>
+    <value>hadoopcluster1namenode1.mycompany.com:8020</value>
   </property>
 
   <property>
     <name>dfs.namenode.rpc-address.cluster1.nn2</name>
-    <value>hadoopcluster1namenode2.mydomain.com:8020</value>
+    <value>hadoopcluster1namenode2.mycompany.com:8020</value>
   </property>
 
   <property>
     <name>dfs.namenode.http-address.cluster1.nn1</name>
-    <value>hadoopcluster1namenode1.mydomain.com:50070</value>
+    <value>hadoopcluster1namenode1.mycompany.com:50070</value>
   </property>
 
   <property>
     <name>dfs.namenode.http-address.cluster1.nn2</name>
-    <value>hadoopcluster1namenode2.mydomain.com:50070</value>
+    <value>hadoopcluster1namenode2.mycompany.com:50070</value>
   </property>
  
   <property>
     <name>dfs.namenode.shared.edits.dir</name>
-    <value>qjournal://hadoopcluster1namenode1.mydomain.com:8485;hadoopcluster1namenode2.mydomain.com:8485/cluster1</value>
+    <value>qjournal://hadoopcluster1namenode1.mycompany.com:8485;hadoopcluster1namenode2.mycompany.com:8485/cluster1</value>
   </property>
 
   <property>
@@ -953,7 +957,7 @@ export HADOOP_NAMENODE_OPTS="-XX:+UseParallelGC"
 
    <property>
      <name>ha.zookeeper.quorum</name>
-     <value>hadoopcluster1namenode1.mydomain.com:2181,hadoopcluster1namenode2.mydomain.com:2181,hadoopcluster1namenode3.mydomain.com:2181</value>
+     <value>hadoopcluster1namenode1.mycompany.com:2181,hadoopcluster1namenode2.mycompany.com:2181,hadoopcluster1namenode3.mycompany.com:2181</value>
    </property>
 
 <!-- General HDFS security config -->
@@ -969,11 +973,11 @@ export HADOOP_NAMENODE_OPTS="-XX:+UseParallelGC"
 </property>
 <property>
   <name>dfs.namenode.kerberos.principal</name>
-  <value>hdfs/_HOST@MYDOMAIN.COM</value>
+  <value>hdfs/_HOST@MYCOMPANY.COM</value>
 </property>
 <property>
   <name>dfs.namenode.kerberos.internal.spnego.principal</name>
-  <value>HTTP/_HOST@MYDOMAIN.COM</value>
+  <value>HTTP/_HOST@MYCOMPANY.COM</value>
 </property>
 
 <!-- Secondary NameNode security config -->
@@ -983,11 +987,11 @@ export HADOOP_NAMENODE_OPTS="-XX:+UseParallelGC"
 </property>
 <property>
   <name>dfs.secondary.namenode.kerberos.principal</name>
-  <value>hdfs/_HOST@YMYDOMAIN.COM</value>
+  <value>hdfs/_HOST@YMYCOMPANY.COM</value>
 </property>
 <property>
   <name>dfs.secondary.namenode.kerberos.internal.spnego.principal</name>
-  <value>HTTP/_HOST@MYDOMAIN.COM</value>
+  <value>HTTP/_HOST@MYCOMPANY.COM</value>
 </property>
 
 <!-- DataNode security config -->
@@ -1009,13 +1013,13 @@ export HADOOP_NAMENODE_OPTS="-XX:+UseParallelGC"
 </property>
 <property>
   <name>dfs.datanode.kerberos.principal</name>
-  <value>hdfs/_HOST@MYDOMAIN.COM</value>
+  <value>hdfs/_HOST@MYCOMPANY.COM</value>
 </property>
 
 <!-- Web Authentication config -->
 <property>
   <name>dfs.web.authentication.kerberos.principal</name>
-  <value>HTTP/_HOST@MYDOMAIN.COM</value>
+  <value>HTTP/_HOST@MYCOMPANY.COM</value>
  </property>
 
 <!-- Security for Quorum-based storage (journal nodes) -->
@@ -1025,11 +1029,11 @@ export HADOOP_NAMENODE_OPTS="-XX:+UseParallelGC"
 </property>
 <property>
   <name>dfs.journalnode.kerberos.principal</name>
-  <value>hdfs/_HOST@MYDOMAIN.COM</value>
+  <value>hdfs/_HOST@MYCOMPANY.COM</value>
 </property>
 <property>
   <name>dfs.journalnode.kerberos.internal.spnego.principal</name>
-  <value>HTTP/_HOST@MYDOMAIN.COM</value>
+  <value>HTTP/_HOST@MYCOMPANY.COM</value>
 </property>
 
 <!-- Uncomment this to enable TLS for HDFS (TODO: setup SSL Certs)
