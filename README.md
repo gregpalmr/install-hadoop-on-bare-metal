@@ -300,19 +300,23 @@ EOF
 
 From any node, list all LDAP users (gets default LDAP svr from /etc/openldap/ldap.conf)
 
-     $ 	ldapsearch -x -W -D "cn=ldapadm,dc=local,dc=net" -b dc=local,dc=net 
+     $ ldapsearch -x -W -D "cn=ldapadm,dc=local,dc=net" -b dc=local,dc=net 
 
 OR
 
-     $ 	cssh "ldapsearch -x -w changeme -D "cn=ldapadm,dc=local,dc=net" -b dc=local,dc=net | grep uid=" 
+     $ cssh "ldapsearch -x -w changeme -D "cn=ldapadm,dc=local,dc=net" -b dc=local,dc=net | grep uid=" 
 
 ### f. Create Hadoop Linux Users
 
-Get the encrypted version of the password
+Get the encrypted version of the password to be used later
 
      $ perl -e 'print crypt("changeme", "salt"),"\n"'. # saJwgELO4ozwU
 
+Create the hadoop group
+
      $ cssh "groupadd --gid 1020 hadoop"
+
+Create the hadoop users
 
      $ cssh "useradd -d /home/hadoop                  --uid 1020 --gid hadoop hadoop"
      $ cssh "useradd -d /home/hadoop --no-create-home --uid 1021 --gid hadoop hdfs"
@@ -374,7 +378,8 @@ Setup the Kerberos client config files on all cluster nodes
 
      Add entry to kerb5.conf file
 
-     $ cssh "
+```
+$ cssh "
 cat > /etc/krb5.conf <<EOF
 
 # Configuration snippets may be placed in this directory as well
@@ -407,35 +412,37 @@ mycompany.com = MYCOMPANY.COM
 
 EOF
 "
+```
 
-     On the edge node/admin node, initialize the Kerberos database
+On the edge node/admin node, initialize the Kerberos database
 
-     Make sure the rngd service is running
+Make sure the rngd service is running
 
      $ ps -ef|grep rngd
 
-     Create the Kerberos database
+Create the Kerberos database
 
      $ kdb5_util create -s -r MYCOMPANY.COM
         <enter password> # changeme
 
-     Start the kerberbos service
+Start the kerberbos service
 
      $ systemctl start krb5kdc kadmin
      $ systemctl enable krb5kdc kadmin
 
-     Create Kerberos Principals
+Create Kerberos Principals
 
-     Create the root principal
+Create the root principal
 
      $ kadmin.local
          kadmin.local: addprinc root/admin # enter password changeme
          kadmin.local: quit
 
-     Create the Hadoop Kerberos principals
+Create the Hadoop Kerberos principals
 
-     Set the operation: delprinc or addprinc
+Set the operation: delprinc or addprinc
 
+```
      OP=addprinc
      #OP=delprinc
 
@@ -478,17 +485,19 @@ EOF
          fi
        done
      done
+```
 
-     List the new principals
+List the new principals
 
      $ echo listprincs | kadmin.local 
 
 
-     Create the Kerberos keytab files for the hdfs, mapred and yarn services
-     hdfs.keytab is used for NameNode, SecondaryNameNode and DataNodes
-     mapred.keytab is used for MapReduce Job History Server
-     yarn.keytab is used for ResourceManager and NodeManager
+Create the Kerberos keytab files for the hdfs, mapred and yarn services
+hdfs.keytab is used for NameNode, SecondaryNameNode and DataNodes
+mapred.keytab is used for MapReduce Job History Server
+yarn.keytab is used for ResourceManager and NodeManager
 
+```
      EDGE NODES
 
      for i in {1..1} # edge nodes
@@ -571,7 +580,7 @@ EOF
      do
        cssh "klist -e -k -t /etc/hadoop/conf/keytab/${svc}.keytab"
      done
-
+```
 
 ### h. Install Apache Big Top (Optional - needed for JSVC_HOME and datanode security)
 
@@ -590,25 +599,28 @@ EOF
 
      $ cssh "java -version"
 
-     $ cssh "echo '
+```
+ $ cssh "echo '
 export JAVA_HOME=/usr/lib/jvm/jre-1.8.0
 ' > /etc/profile.d/java_env.sh"
+```
 
      $ cssh "cat /etc/profile.d/java_env.sh"
 
      $ cssh " echo \$JAVA_HOME"
-
 
 ### j. Install Zookeeper
 
      $ cssh -n "curl -O http://ftp.wayne.edu/apache/zookeeper/stable/apache-zookeeper-3.5.7-bin.tar.gz &"
      $ cssh -n "tar -xf apache-zookeeper-3.5.7-bin.tar.gz -C /var/lib/"
 
-     $ cssh -n "echo '
+```
+$ cssh -n "echo '
 tickTime=2000
 dataDir=/home/hadoop/data/zookeeper
 clientPort=2181 
 ' >> /var/lib/apache-zookeeper-3.5.7-bin/conf/zoo.cfg"
+```
 
      $ cssh "mkdir -p /home/hadoop/data && chown hadoop:hadoop /home/hadoop/data && chmod 770 /home/hadoop/data"
 
