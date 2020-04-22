@@ -112,7 +112,7 @@ RHEL 7 can tune THP with the tuned system service
      $ cssh "mkdir -p /etc/tuned/nothp_profile"
 
 ```
-     $ cssh "
+$ cssh "
 cat > /etc/tuned/nothp_profile/tuned.conf <<EOF
 [main]
 include= throughput-performance
@@ -133,33 +133,31 @@ EOF
      $ cssh "echo 'fs.file-max=2097152' >> /etc/sysctl.conf 
      $ sysctl -p && cat /proc/sys/fs/file-max"
 
-
 ### d. Setup Chrony Network Time Protocol 
--------------------------------------------
 
-     Check if crony is running
+Check if crony is running
 
      $ cssh "systemctl status chronyd.service | grep -e Loaded -e Active"
 
-     If needed, install crony
+If needed, install crony
 
      $ cssh "yum -y install chrony"
      $ cssh "systemctl start chronyd.service && systemctl enable chronyd.service"
 
-     Check if crony is referencing time sources
+Check if crony is referencing time sources
      $ cssh "chronyc sources"
 
-     Check if crony is tracking
+Check if crony is tracking
      $ cssh "chronyc tracking"
 
 
 ### e. Setup OpenLDAP (Optional)
 
-     SEE: 
-     https://community.cloudera.com/t5/Community-Articles/How-to-setup-OpenLDAP-2-4-on-CentOS-7/ta-p/249263
-     https://www.itzgeek.com/how-tos/linux/centos-how-tos/step-step-openldap-server-configuration-centos-7-rhel-7.html
+SEE: 
+https://community.cloudera.com/t5/Community-Articles/How-to-setup-OpenLDAP-2-4-on-CentOS-7/ta-p/249263
+https://www.itzgeek.com/how-tos/linux/centos-how-tos/step-step-openldap-server-configuration-centos-7-rhel-7.html
 
-     Run the following command to install OpenLDAP server on the edge node and the OpenLDAP client on the master nodes and worker nodes.
+Run the following command to install OpenLDAP server on the edge node and the OpenLDAP client on the master nodes and worker nodes.
 
      $ yum -y install openldap compat-openldap openldap-clients openldap-servers openldap-servers-sql openldap-devel
 
@@ -167,14 +165,15 @@ EOF
      $ systemctl enable slapd.service
      $ netstat -antup | grep -i 389
 
-     Get the hash for the root ldap password
+Get the hash for the root ldap password
 
      $ slappasswd -h {SSHA} -s changeme
           {SSHA}RfySeypjO0OJ2sPCo+Mn3FotCGTLfZ4v
 
-     Change the following configuration with your domain information (mycompany.com)
+Change the following configuration with your domain information (mycompany.com)
 
-     $ cat > /tmp/ldap-db.ldif << EOF
+```
+$ cat > /tmp/ldap-db.ldif << EOF
 dn: olcDatabase={2}hdb,cn=config
 changetype: modify
 replace: olcSuffix
@@ -190,10 +189,11 @@ changetype: modify
 replace: olcRootPW
 olcRootPW: {SSHA}RfySv5KjO0OJ2sPCo+Mn3FotCGTLfZ4v
 EOF
+```
 
      $ ldapmodify -Y EXTERNAL -H ldapi:/// -f /tmp/ldap-db.ldif
 
-     Restrict monitor access to the ldapadm user. Change the following configuration with your domain information (mycompany.com):
+Restrict monitor access to the ldapadm user. Change the following configuration with your domain information (mycompany.com):
 
      $ cat > /tmp/monitor.ldif <<EOF
 dn: olcDatabase={1}monitor,cn=config
@@ -204,12 +204,13 @@ EOF
 
      $ ldapmodify -Y EXTERNAL -H ldapi:/// -f /tmp/monitor.ldif
 
-     Create an SSL cert to connect with
+ Create an SSL cert to connect with
 
      $ openssl req -new -x509 -nodes -out /etc/openldap/certs/ldap.mydomain.com.cert -keyout /etc/openldap/certs/ldap.mydomain.com.key -days 365
      $ chown ldap:ldap /etc/openldap/certs/ldap.mydomain.com.*
 
-     $ cat > /tmp/certs.ldif <<EOF
+```
+$ cat > /tmp/certs.ldif <<EOF
 dn: cn=config
 changetype: modify
 replace: olcTLSCertificateFile
@@ -220,23 +221,24 @@ changetype: modify
 replace: olcTLSCertificateKeyFile
 olcTLSCertificateKeyFile: /etc/openldap/certs/ldap.mydomain.com.key
 EOF
-
+```
      $ ldapmodify -Y EXTERNAL -H ldapi:/// -f /tmp/certs.ldif
 
      $ slaptest -u
 
-     Create the LDAP database
+ Create the LDAP database
 
      $ cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
      $ chown ldap:ldap /var/lib/ldap/*
 
-     Add the cosine and nis LDAP schemas.
+ Add the cosine and nis LDAP schemas.
 
      $ ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/cosine.ldif
      $ ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/nis.ldif 
      $ ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/inetorgperson.ldif
 
-     $ cat > /tmp/base.ldif <<EOF
+```
+$ cat > /tmp/base.ldif <<EOF
 dn: dc=local,dc=net
 dc: local
 objectClass: top
@@ -255,19 +257,21 @@ dn: ou=Group,dc=local,dc=net
 objectClass: organizationalUnit
 ou: Group
 EOF
+```
 
      $ ldapadd -x -W -D "cn=ldapadm,dc=local,dc=net" -f /tmp/base.ldif
 
-     Add a real user to the ldap directory
+ Add a real user to the ldap directory
 
      $ cssh "groupadd --gid 1029 hadoopusers"
      $ cssh "useradd --uid 1030 -d /home/myuser myuser"
      $ passwd myuser    # enter password changeme
      $ cssh "usermod --groups hadoopusers myuser"
 
-     gidNumber is the gid in /etc/group for user myuser
+ gidNumber is the gid in /etc/group for user myuser
 
-     $ cat > /tmp/user_myuser.ldif  <<EOF
+```
+$ cat > /tmp/user_myuser.ldif  <<EOF
 dn: uid=myuser,ou=People,dc=local,dc=net
 objectClass: top
 objectClass: account
@@ -286,20 +290,21 @@ shadowMin: 0
 shadowMax: 99999
 shadowWarning: 7
 EOF
+``
 	
      $ ldapadd -x -W -D "cn=ldapadm,dc=local,dc=net" -f /tmp/user_myuser.ldif
 
-     From any node, list all LDAP users (gets default LDAP svr from /etc/openldap/ldap.conf)
+ From any node, list all LDAP users (gets default LDAP svr from /etc/openldap/ldap.conf)
 
      $ 	ldapsearch -x -W -D "cn=ldapadm,dc=local,dc=net" -b dc=local,dc=net 
 
-     OR
+ OR
 
      $ 	cssh "ldapsearch -x -w changeme -D "cn=ldapadm,dc=local,dc=net" -b dc=local,dc=net | grep uid=" 
 
 ### f. Create Hadoop Linux Users
 
-     get the encrypted version of the password
+Get the encrypted version of the password
 
      $ perl -e 'print crypt("changeme", "salt"),"\n"'. # saJwgELO4ozwU
 
@@ -313,7 +318,7 @@ EOF
      $ cssh "useradd -d /home/hadoop --no-create-home --uid 1025 --gid hadoop hbase"
      $ cssh "useradd -d /home/hadoop --no-create-home --uid 1026 --gid hadoop zookeeper"
 
-     Allow members of the group hadoop to read & write to /home/hadoop
+Allow members of the group hadoop to read & write to /home/hadoop
 
      $ cssh "chmod -R g+rw /home/hadoop && chmod -R o-rw /home/hadoop"
 
@@ -322,23 +327,24 @@ EOF
 
 ### g. Install Kerberos (Optional)
 
-     SEE:
-     https://hadoop.apache.org/docs/r2.4.1/hadoop-project-dist/hadoop-common/SecureMode.html 
-     https://www.theurbanpenguin.com/configuring-a-centos-7-kerberos-kdc/
+SEE:
+https://hadoop.apache.org/docs/r2.4.1/hadoop-project-dist/hadoop-common/SecureMode.html 
+https://www.theurbanpenguin.com/configuring-a-centos-7-kerberos-kdc/
 
-     On the edge node/admin node, install all packages
+On the edge node/admin node, install all packages
 
      $ yum -y install -y krb5-server krb5-workstation pam_krb5
 
-     On all the Hadoop cluster nodes, only install the client packages
+On all the Hadoop cluster nodes, only install the client packages
 
      $ cssh "yum -y install -y krb5-workstation pam_krb5 &"
 
      $ cssh "yum list installed krb5*"
 
-     On the edge node/admin node, setup the Kerberos KDC config files
+On the edge node/admin node, setup the Kerberos KDC config files
 
-     $ cat > /var/kerberos/krb5kdc/kdc.conf <<EOF
+```
+$ cat > /var/kerberos/krb5kdc/kdc.conf <<EOF
 
 [kdcdefaults]
  kdc_ports = 88
@@ -352,12 +358,15 @@ EOF
   admin_keytab = /var/kerberos/krb5kdc/kadm5.keytab
   supported_enctypes = aes256-cts:normal aes128-cts:normal des3-hmac-sha1:normal arcfour-hmac:normal camellia256-cts:normal camellia128-cts:normal des-hmac-sha1:normal des-cbc-md5:normal des-cbc-crc:normal
 EOF
+```
 
-     $ cat > /var/kerberos/krb5kdc/kadm5.acl <<EOF
+```
+$ cat > /var/kerberos/krb5kdc/kadm5.acl <<EOF
 */admin@MYDOMAIN.COM      *
 EOF
+```
 
-     Setup the Kerberos client config files on all cluster nodes
+Setup the Kerberos client config files on all cluster nodes
 
      Add entry to kerb5.conf file
 
