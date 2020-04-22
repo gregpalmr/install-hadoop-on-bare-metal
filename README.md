@@ -54,9 +54,7 @@ then you would define the EDGE_NODES_HOSTNAME_TEMPLATE shell variable as:
 Similarly, if the hostnames of your worker nodes are:
 
      hadoopcluster1datanode1.mydomain.com
-
      hadoopcluster1datanode2.mydomain.com
-
      hadoopcluster1datanode3.mydomain.com
 
 then you would define the NAME_NODES_HOSTNAME_TEMPLATE shell variable as:
@@ -66,9 +64,7 @@ then you would define the NAME_NODES_HOSTNAME_TEMPLATE shell variable as:
 Finally, if the hostnames of your edge node (or access nodes) are:
 
      hadoopcluster1edgenode1.mydomain.com
-
      hadoopcluster1edgenode2.mydomain.com
-
      hadoopcluster1edgenode3.mydomain.com
 
 then you would define the DATA_NODES_HOSTNAME_TEMPLATE shell variable as:
@@ -93,7 +89,6 @@ If you don't have an existing SSL key for SSH sessions, you can use this cssh sc
 
 It will prompt you for the password of your current logged in user as it copies the SSL key to each server.
 
-
 ## Step 2.  Prepare the Bare-metal servers for the Hadoop install
 
 In this section, you will be running the cssh script commands from your edge node server.
@@ -108,10 +103,11 @@ In this section, you will be running the cssh script commands from your edge nod
 
 ### b. Disable Transparent Huge Page
 
-     This old way (RHEL 6) doesn't work in RHEL 7
+This old way (RHEL 6) doesn't work in RHEL 7
+
      # cssh "echo never > cat /sys/kernel/mm/transparent_hugepage/enabled"
 
-     RHEL 7 can tune THP with the tuned system service
+RHEL 7 can tune THP with the tuned system service
 
      $ cssh "mkdir -p /etc/tuned/nothp_profile"
 
