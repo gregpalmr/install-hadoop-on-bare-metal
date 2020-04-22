@@ -376,7 +376,7 @@ EOF
 
 Setup the Kerberos client config files on all cluster nodes
 
-     Add entry to kerb5.conf file
+Add entry to the kerb5.conf file
 
 ```
 $ cssh "
@@ -440,9 +440,9 @@ Create the root principal
 
 Create the Hadoop Kerberos principals
 
-Set the operation: delprinc or addprinc
 
 ```
+     # Set the operation: delprinc or addprinc
      OP=addprinc
      #OP=delprinc
 
@@ -627,12 +627,13 @@ clientPort=2181
      $ cssh -n "mkdir -p /home/hadoop/data/zookeeper && chown zookeeper:hadoop /home/hadoop/data/zookeeper"
      $ cssh -n "chown -R zookeeper:hadoop /var/lib/apache-zookeeper-3.5.7-bin"
 
-     $ cssh -n "echo '
+```
+$ cssh -n "echo '
 export ZOOKEEPER_INSTALL=/var/lib/apache-zookeeper-3.5.7-bin
 export PATH=\$PATH:\$ZOOKEEPER_INSTALL/bin
 ' > /etc/profile.d/zookeeper_env.sh" 
-
-     Start the zookeeper daemons as the zookeeper user
+```
+Start the zookeeper daemons as the zookeeper user
 
      $ cssh -n "sudo su zookeeper -c '/var/lib/apache-zookeeper-3.5.7-bin/bin/zkServer.sh start'"
 
@@ -640,14 +641,15 @@ export PATH=\$PATH:\$ZOOKEEPER_INSTALL/bin
 
 ## Step 3. Install Apache Hadoop
 
-     SEE: 
-     https://hadoop.apache.org/docs/r2.10.0/hadoop-project-dist/hadoop-common/ClusterSetup.html
-     https://hadoop.apache.org/docs/r2.10.0/hadoop-project-dist/hadoop-common/SecureMode.html
-     BOOK: Practical Hadoop Security By Bhushan Lakhe 
+SEE: 
+https://hadoop.apache.org/docs/r2.10.0/hadoop-project-dist/hadoop-common/ClusterSetup.html
+https://hadoop.apache.org/docs/r2.10.0/hadoop-project-dist/hadoop-common/SecureMode.html
+BOOK: Practical Hadoop Security By Bhushan Lakhe 
 
 ### a. Setup Hadoop environment variables 
 
-     $ cssh "echo '
+```
+$ cssh "echo '
 export HADOOP_PREFIX=/var/lib/hadoop-2.10.0
 export HADOOP_CONF_DIR=/etc/hadoop/conf
 export HADOOP_HOME=\${HADOOP_PREFIX}
@@ -660,43 +662,44 @@ export PATH=\$PATH:\$HADOOP_PREFIX/bin:\$HADOOP_PREFIX/sbin
 export DEFAULT_LIBEXEC_DIR=\$HADOOP_PREFIX/libexec
 export HADOOP_NAMENODE_OPTS="-XX:+UseParallelGC"
 ' > /etc/profile.d/hadoop_env.sh"
+```
 
      $ cssh "echo JAVA_HOME=\$JAVA_HOME - HADOOP_HOME=\$HADOOP_HOME - HADOOP_CONF_DIR=\$HADOOP_CONF_DIR"
 
 ### b. Setup the SSL Certificates keystore and trustore
 
-     SEE: https://docs.cloudera.com/HDPDocuments/HDP3/HDP-3.0.0/configuring-wire-encryption/sec_configuring_wire_encryption.pdf
+SEE: https://docs.cloudera.com/HDPDocuments/HDP3/HDP-3.0.0/configuring-wire-encryption/sec_configuring_wire_encryption.pdf
 
      $ cssh "mkdir -p /etc/hadoop/conf/tls/certs"
 
-     Create the keystore and certificate:
+Create the keystore and certificate:
 
      $ cssh "keytool -genkeypair -keystore /etc/hadoop/conf/tls/certs/keystore.jks -alias `hostname -f` -validity 365 -keypass changeme -storepass changeme -dname \"CN=`hostname -f`, OU=Dremio, O=Dremio, L=Albany, ST=NY, C=US\" "
 
-     Create the Certificate Authority (CA)
+Create the Certificate Authority (CA)
 
      $ cssh "openssl req -new -x509 -keyout /etc/hadoop/conf/tls/certs/ca-key -out /etc/hadoop/conf/tls/certs/ca-cert -nodes -days 365 -subj \"/CN=`hostname -f`/OU=Dremio/O=Dremio/L=Albany/ST=NY/C=US\" "
 
-     Add the generated CA to the server's truststore
+Add the generated CA to the server's truststore
 
      $ cssh "keytool -keystore /etc/hadoop/conf/tls/certs/server.truststore.jks -storepass changeme -keypass changeme -alias CARoot -noprompt -import -file /etc/hadoop/conf/tls/certs/ca-cert"
 
-     Add the generated CA to the client's truststore
+Add the generated CA to the client's truststore
 
      $ cssh "keytool -keystore /etc/hadoop/conf/tls/certs/client.truststore.jks -storepass changeme -keypass changeme -alias CARoot -noprompt -import -file /etc/hadoop/conf/tls/certs/ca-cert"
 
      $ cssh "ls -al /etc/hadoop/conf/tls/certs/"
 
-     Sign all certificates with the CA
-     First, export the certificate from the keystore
+Sign all certificates with the CA
+First, export the certificate from the keystore
 
      $ cssh "keytool -keystore /etc/hadoop/conf/tls/certs/keystore.jks -alias `hostname -f` -storepass changeme -certreq -file /etc/hadoop/conf/tls/certs/exported-cert-file "
 
-     Second, sign the certificate with the CA
+Second, sign the certificate with the CA
 
      $ cssh "openssl x509 -req -CA /etc/hadoop/conf/tls/certs/ca-cert -CAkey /etc/hadoop/conf/tls/certs/ca-key -in /etc/hadoop/conf/tls/certs/exported-cert-file -out /etc/hadoop/conf/tls/certs/cert-signed -days 365 -CAcreateserial -passin pass:changeme "
 
-     Import the CA certificate and the signed certificate into the keystore
+Import the CA certificate and the signed certificate into the keystore
 
      $ cssh "keytool -keystore /etc/hadoop/conf/tls/certs/server.keystore.jks -alias CARoot -import -storepass changeme -noprompt -file /etc/hadoop/conf/tls/certs/ca-cert "
 
@@ -711,35 +714,36 @@ export HADOOP_NAMENODE_OPTS="-XX:+UseParallelGC"
 
 ### c. Download Apache Hadoop binaries
 
-     SEE: https://www.apache.org
+SEE: https://www.hadoop.apache.org
 
      $ cssh "curl -L -# -O https://downloads.apache.org/hadoop/common/hadoop-2.10.0/hadoop-2.10.0.tar.gz"
 
      $ cssh "tar xf hadoop-2.10.0.tar.gz -C /var/lib/ && chown -R hadoop:hadoop /var/lib/hadoop-2.10.0"
      $ cssh "ls -al /var/lib/hadoop-2.10.0"
 
-     Create the hadoop data dir on the master nodes 
+Create the hadoop data dir on the master nodes 
 
      $ cssh -n "mkdir -p /home/hadoop/data && chown hadoop:hadoop /home/hadoop/data && chmod 770 /home/hadoop/data"
 
-     Change the owner of the data node's data directories
+Change the owner of the data node's data directories
 
      $ cssh -d "chown -R hdfs:hadoop /data_* && chmod 770 /data_*"
 
-     Create the logs dir for hadoop daemon log files
+Create the logs dir for hadoop daemon log files
 
      $ cssh "mkdir -p /var/log/hadoop && chown -R hadoop:hadoop /var/log/hadoop && chmod 770 /var/log/hadoop"
 
 ### d. Configure the Hadoop 2.10.0 daemons in the xml config files. The following setup enables name node HA using the Hadoop Journal Quorum Manager
 
-     SEE: https://hadoop.apache.org/docs/r2.10.0/hadoop-project-dist/hadoop-hdfs/HDFSHighAvailabilityWithQJM.html
+SEE: https://hadoop.apache.org/docs/r2.10.0/hadoop-project-dist/hadoop-hdfs/HDFSHighAvailabilityWithQJM.html
 
-     Setup the configuration file: /etc/hadoop/conf/hadoop-env.sh
+Setup the configuration file: /etc/hadoop/conf/hadoop-env.sh
 
      $ cssh "cp $HADOOP_HOME/etc/hadoop/hadoop-env.sh $HADOOP_CONF_DIR"
 
-     Setup the configuration file: /etc/hadoop/conf/core-site.xml
+Setup the configuration file: /etc/hadoop/conf/core-site.xml
 
+```
      $ cssh "echo '
 <configuration>
 
@@ -812,10 +816,12 @@ export HADOOP_NAMENODE_OPTS="-XX:+UseParallelGC"
 
 </configuration>
 ' > \$HADOOP_CONF_DIR/core-site.xml"
+```
 
-     Setup the configuration file: /etc/hadoop/conf/ssl-server.xml
+Setup the configuration file: /etc/hadoop/conf/ssl-server.xml
 
-     $ cssh "echo '
+```
+$ cssh "echo '
 <configuration>
 
   <property>
@@ -849,10 +855,11 @@ export HADOOP_NAMENODE_OPTS="-XX:+UseParallelGC"
 
 </configuration>
 ' > \$HADOOP_CONF_DIR/ssl-server.xml"
-
-     Setup the configuration file: /etc/hadoop/conf/ssl-server.xml
+```
+Setup the configuration file: /etc/hadoop/conf/ssl-server.xml
      
-     $ cssh "echo '
+```
+$ cssh "echo '
 <configuration>
 
   <property>
@@ -886,10 +893,12 @@ export HADOOP_NAMENODE_OPTS="-XX:+UseParallelGC"
 
 </configuration>
 ' > \$HADOOP_CONF_DIR/ssl-client.xml"
+```
 
-     Setup the configuration file: /etc/hadoop/conf/hdfs-site.xml
+Setup the configuration file: /etc/hadoop/conf/hdfs-site.xml
      
-     $ cssh "echo '
+```
+$ cssh "echo '
 <configuration>
 
   <property>
@@ -1057,10 +1066,12 @@ export HADOOP_NAMENODE_OPTS="-XX:+UseParallelGC"
 
 </configuration>
 ' > \$HADOOP_CONF_DIR/hdfs-site.xml"
+```
 
-     Setup the configuration file: /etc/hadoop/conf/hadoop-policy.xml
+Setup the configuration file: /etc/hadoop/conf/hadoop-policy.xml
      
-     $ cssh "echo '
+```
+$ cssh "echo '
 <configuration>
 
 <property>
@@ -1079,10 +1090,12 @@ export HADOOP_NAMENODE_OPTS="-XX:+UseParallelGC"
 
 </configuration>
 ' > \$HADOOP_CONF_DIR/hadoop-policy.xml"
+```
 
-     Setup the configuration file: /etc/default/hadoop-hdfs-datanode (needed for secure datanodes)
+Setup the configuration file: /etc/default/hadoop-hdfs-datanode (needed for secure datanodes)
      
-     $ cssh "echo '
+```
+$ cssh "echo '
 
 export HADOOP_SECURE_DN_USER=hdfs
 export HADOOP_SECURE_DN_PID_DIR=/var/lib/hadoop-hdfs
@@ -1090,12 +1103,14 @@ export HADOOP_SECURE_DN_LOG_DIR=/var/log/hadoop-hdfs
 export JSVC_HOME=/usr/lib/bigtop-utils/
 
 ' > /etc/default/hadoop-hdfs-datanode"
+```
 
      $ cssh " cat /etc/default/hadoop-hdfs-datanode"
 
-     Setup the configuration file: /etc/hadoop/conf/yarn-site.xml
+Setup the configuration file: /etc/hadoop/conf/yarn-site.xml
      
-     $cssh "echo '
+```
+$cssh "echo '
 <configuration>
 
     <property>
@@ -1181,10 +1196,12 @@ export JSVC_HOME=/usr/lib/bigtop-utils/
 
 </configuration>
 ' > \$HADOOP_CONF_DIR/yarn-site.xml"
+```
 
-     Setup the configuration file: /etc/hadoop/conf/capacity-scheduler.xml
+Setup the configuration file: /etc/hadoop/conf/capacity-scheduler.xml
      
-     $ cssh "echo '
+```
+$ cssh "echo '
 
 <configuration>
 
@@ -1233,10 +1250,12 @@ export JSVC_HOME=/usr/lib/bigtop-utils/
 </configuration>
 
 ' > \$HADOOP_CONF_DIR/capacity-scheduler.xml"
+```
 
-     Setup the configuration file: /etc/hadoop/conf/mapred-site.xml
+Setup the configuration file: /etc/hadoop/conf/mapred-site.xml
      
-     $ cssh "echo '
+```
+$ cssh "echo '
 
 <configuration>
   <property>
@@ -1259,14 +1278,16 @@ export JSVC_HOME=/usr/lib/bigtop-utils/
 </configuration>
 
 ' > \$HADOOP_CONF_DIR/mapred-site.xml"
+```
 
-     Setup the configuration file: /etc/hadoop/conf/log4j 
+Setup the configuration file: /etc/hadoop/conf/log4j 
 
      $ cssh "mkdir -p /var/log/hadoop"
 
      $ cssh "rm /var/lib/hadoop-2.10.0/conf/log4j.properties"
 
-     $ cssh "echo '
+```
+$ cssh "echo '
 # Define some default values that can be overridden by system properties
 hadoop.root.logger=INFO,console
 hadoop.log.dir=/var/log/hadoop
@@ -1293,75 +1314,86 @@ log4j.appender.RFA.MaxBackupIndex=\${hadoop.log.maxbackupindex}
 log4j.appender.RFA.layout=org.apache.log4j.PatternLayout
 
 ' > \$HADOOP_CONF_DIR/log4j.properties"
+```
 
-     Start the Journal Nodes
+Start the Journal Nodes
 
      $ cssh -n "su -l hdfs -c '$HADOOP_HOME/sbin/hadoop-daemon.sh start journalnode'"
      $ cssh -n "ps -ef |grep journalnode"
 
-     Format the name node on hadoopcluster1namenode1 (one-time only)
+Format the name node on hadoopcluster1namenode1 (one-time only)
 
      $ cssh -n "mkdir -p /home/hadoop/data/dfs/name"
      $ ssh -i ~/.ssh/id_rsa_cssh root@hadoopcluster1namenode1 "hdfs namenode -format"
 
-     Copy the name node meta data to the second name node (one-time only)
+Copy the name node meta data to the second name node (one-time only)
 
      $ ssh -i ~/.ssh/id_rsa_cssh root@hadoopcluster1namenode2 "hdfs namenode -bootstrapStandby"
 
-     Start the name node daemons on hadoopcluster1namenode1 and hadoopcluster1namenode2 (only 2 namenodes allowed in Hadoop 2.10.0)
+Start the name node daemons on hadoopcluster1namenode1 and hadoopcluster1namenode2 (only 2 namenodes allowed in Hadoop 2.10.0)
     
      $ ssh -i ~/.ssh/id_rsa_cssh root@hadoopcluster1namenode1 "hadoop-daemon.sh start namenode"     
      $ ssh -i ~/.ssh/id_rsa_cssh root@hadoopcluster1namenode2 "hadoop-daemon.sh start namenode"
 
-     Format the Zookeeper store (one-time only)
+Format the Zookeeper store (one-time only)
 
      $ ssh -i ~/.ssh/id_rsa_cssh root@hadoopcluster1namenode1 "hdfs zkfc -formatZK"
 
-     Start the Hadooop zookeeper client instances
+Start the Hadooop zookeeper client instances
 
      $ cssh -n "hadoop-daemon.sh start zkfc"
 
-     Start the data node daemons
+Start the data node daemons
 
      $ cssh -d "hadoop-daemon.sh start datanode"   
 
-     See haadmin -help
-     See hdfs dfsadmin -report -live
-     See hadoop fs -ls /
+Optional:
 
+     $ haadmin -help
+     $ hdfs dfsadmin -report -live
+     $ hadoop fs -ls /
 
-     Startup the Hadoop Daemons
+Startup the Hadoop Daemons
 
-     $ cssh -n "
+```
+$ cssh -n "
 zkServer.sh start
 hadoop-daemon.sh --script hdfs start zkfc
 hadoop-daemon.sh --script hdfs start journalnode
 hadoop-daemon.sh --script hdfs start namenode
 yarn-daemon.sh start resourcemanager
 "
-     $ cssh -d "
+```
+
+```
+$ cssh -d "
 hadoop-daemon.sh --script hdfs start datanode
 yarn-daemon.sh start nodemanager
 "
+```
 
      $ cssh "jps | grep -v Jps | sort -k 2"
 
-     Access the Namenode Consoles
+Access the Namenode Consoles
 
      http://hadoopcluster1namenode1:50070
      http://hadoopcluster1namenode2:50070
 
-     Access the Yarn Console
+Access the Yarn Console
 
      http://hadoopcluster1namenode1:8088
 
-     Shutdown Hadoop Daemons
+Shutdown Hadoop Daemons
 
-     $ cssh -d "
+```
+$ cssh -d "
 hadoop-daemon.sh --script hdfs stop datanode
 yarn-daemon.sh stop nodemanager
 "
-     $ cssh -n "
+```
+
+```
+$ cssh -n "
 hadoop-daemon.sh --script hdfs stop namenode
 hadoop-daemon.sh --script hdfs stop journalnode
 yarn-daemon.sh stop resourcemanager
@@ -1369,14 +1401,15 @@ yarn-daemon.sh stop resourcemanager
 hadoop-daemon.sh --script hdfs stop zkfc
 zkServer.sh stop
 "
+```
 
      $ cssh "jps | grep -v Jps | sort -k 2"
 
-     Download sample data sets and upload to HDFS
+Download sample data sets and upload to HDFS
 
      $ cd $HOME && mkdir -p data-sets && cd data-sets
 
-     San Fransisco Police Dept data - 2003 - 2018 (442M)
+San Fransisco Police Dept data - 2003 - 2018 (442M)
 
      $ curl https://data.sfgov.org/api/views/tmnf-yvry/rows.csv?accessType=DOWNLOAD -o sf-police-2003-2018.txt
 
@@ -1384,10 +1417,10 @@ zkServer.sh stop
      $ hdfs dfs -copyFromLocal sf-police-2003-2018.txt /sample-data/sf-police/
      $ hdfs dfs -ls -R /sample-data
 
-     Run a test YARN based MapReduce program (on edge node):
+Run a test YARN based MapReduce program (on edge node):
      $ yarn jar /var/lib/hadoop-*/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar pi 16 1000
 
-     Convert to user hadoop
+Convert to user hadoop
 
      $ cssh "chown -R hadoop:hadoop /var/lib/hadoop-2.10.0"
      $ cssh "chown -R hadoop:hadoop /var/log/hadoop"
@@ -1396,9 +1429,9 @@ zkServer.sh stop
 
 ## Step 4. Install Dremio on Hadoop w/ YARN
 
-     SEE: https://docs.dremio.com/deployment/yarn-hadoop.html
+SEE: https://docs.dremio.com/deployment/yarn-hadoop.html
 
-     Add the following to the hadoop core-site.xml file.
+Add the following to the hadoop core-site.xml file.
 
      <property>
        <name>hadoop.proxyuser.dremio.hosts</name>
@@ -1413,7 +1446,8 @@ zkServer.sh stop
        <value>*</value>
      </property>
 
-     Add the following to capacity-scheduler.xml
+Add the following to capacity-scheduler.xml
+
      <property>
        <name>yarn.scheduler.capacity.root.queues</name>
        <value>default, dremio</value>
@@ -1442,21 +1476,21 @@ zkServer.sh stop
        </description>
      </property>
 
-     Create a dremio user
+Create a dremio user
 
-     SEE: https://docs.dremio.com/deployment/standalone/standalone-tarball.html
+SEE: https://docs.dremio.com/deployment/standalone/standalone-tarball.html
 
      $ cssh "groupadd -r dremio"
      $ cssh "useradd -r -g dremio -d /var/lib/dremio -s /sbin/nologin dremio"
 
-     Create the dremio directories
+Create the dremio directories
 
      $ cssh "mkdir -p /opt/dremio"
      $ cssh "mkdir -p /var/run/dremio && chown dremio:dremio /var/run/dremio"
      $ cssh "mkdir -p /var/log/dremio && chown dremio:dremio /var/log/dremio"
      $ cssh "mkdir -p /var/log/dremio && chown dremio:dremio /var/log/dremio"
 
-     Download the community edition of Dremio
+Download the community edition of Dremio
 
      $ curl -O http://download.dremio.com/xxxx
 
@@ -1464,22 +1498,22 @@ zkServer.sh stop
      $ cssh "ln -s /opt/dremio/conf /etc/dremio"
      $ cssh "chown -R dremio:dremio /opt/dremio"
 
-     Copy the Hadoop config files to the Dremio directories
+Copy the Hadoop config files to the Dremio directories
 
      $ cp \$HADOOP_HOME/etc/hadoop/core-site.xml /etc/dremio/
      $ cp \$HADOOP_HOME/etc/hadoop/hdfs-site.xml /etc/dremio/
      $ cp \$HADOOP_HOME/etc/hadoop/yarn-site.xml /etc/dremio/
 
-     Add dremio env variable to /etc/profile.d scripts
+Add dremio env variable to /etc/profile.d scripts
 
      $ export DREMIO_HOME=/opt/dremio' > /etc/profile.d/dremio_env.sh
      $ echo \$DREMIO_HOME
 
-     Create a dremio meta-data directory on the coordinator node (hadoopcluster1edgenode1)
+Create a dremio meta-data directory on the coordinator node (hadoopcluster1edgenode1)
 
      $ mkdir -p \$DREMIO_HOME/data && chown dremio:dremio \$DREMIO_HOME/data
 
-     Configure Dremio in dremio.conf
+Configure Dremio in dremio.conf
 
      $ sed -i 'sX\#dist: \"pdfs:\/\/\"\${paths.local}\"/pdfs\"X dist: \"hdfs://cluster1/pdfs\" Xg' /opt/dremio/conf/dremio.conf
 
@@ -1487,9 +1521,10 @@ zkServer.sh stop
 
      $ sed -i 'sXexecutor.enabled: trueXexecutor.enabled: true,\n  coordinator.master.embedded-zookeeper.enabled: falseXg' /opt/dremio/conf/dremio.conf
 
-     OR
+OR
 
-     $ echo '
+```
+$ echo '
 zookeeper: \"hadoopcluster1namenode1:2181,hadoopcluster1namenode2:2181,hadoopcluster1namenode3:2181\"
 
 paths: {
@@ -1507,18 +1542,19 @@ services: {
   coordinator.master.embedded-zookeeper.enabled: false
 }
 ' > /opt/dremio/conf/dremio.conf
+```
 
-     Start up the Dremio Daemons
+Start up the Dremio Daemons
 
-     Start the Dremio Coordinator (only on hadoopcluster1namenode1)
+Start the Dremio Coordinator (only on hadoopcluster1namenode1)
 
      $ ssh -i ~/.ssh/id_rsa_cssh hadoopcluster1namenode1 "/opt/dremio/bin/dremio start"
 
-     Access the Dremio Coordinator UI
+Access the Dremio Coordinator UI
 
           http://hadoopcluster1edgenode1:9047
 
-     Remove Dremio
+Remove Dremio
 
      $ /opt/dremio/bin/dremio stop
 
