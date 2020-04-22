@@ -41,9 +41,11 @@ To begin using these utilities, you must configure the scripts to know what host
 
      Change the following shell script lines to use template matching strings that reflect the naming convention of your servers' hostnames. For example, if the hostnames of your master nodes are:
 
-          - hadoopcluster1namenode1.mydomain.com
-          - hadoopcluster1namenode2.mydomain.com
-          - hadoopcluster1namenode3.mydomain.com
+     hadoopcluster1namenode1.mydomain.com
+
+     hadoopcluster1namenode2.mydomain.com
+
+     hadoopcluster1namenode3.mydomain.com
 
 then you would define the EDGE_NODES_HOSTNAME_TEMPLATE shell variable as:
 
@@ -52,7 +54,9 @@ then you would define the EDGE_NODES_HOSTNAME_TEMPLATE shell variable as:
 Similarly, if the hostnames of your worker nodes are:
 
      hadoopcluster1datanode1.mydomain.com
+
      hadoopcluster1datanode2.mydomain.com
+
      hadoopcluster1datanode3.mydomain.com
 
 then you would define the NAME_NODES_HOSTNAME_TEMPLATE shell variable as:
@@ -62,7 +66,9 @@ then you would define the NAME_NODES_HOSTNAME_TEMPLATE shell variable as:
 Finally, if the hostnames of your edge node (or access nodes) are:
 
      hadoopcluster1edgenode1.mydomain.com
+
      hadoopcluster1edgenode2.mydomain.com
+
      hadoopcluster1edgenode3.mydomain.com
 
 then you would define the DATA_NODES_HOSTNAME_TEMPLATE shell variable as:
