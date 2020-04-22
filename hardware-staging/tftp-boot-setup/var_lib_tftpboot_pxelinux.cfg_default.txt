@@ -1,0 +1,15 @@
+DEFAULT menu.c32
+PROMPT 0
+TIMEOUT 300
+ONTIMEOUT localdisk
+MENU TITLE Hadoop Cluster PXE Network Boot
+
+LABEL localdisk
+    MENU LABEL ^Local Hard Drive
+    MENU DEFAULT
+    LOCALBOOT 0
+
+LABEL install_hadoop_worker_node
+    MENU LABEL ^CentOS 7.6 (64) - HADOOP w/ 1,4,12 Disks
+    KERNEL centos/os/x86_64/vmlinuz selinux=0
+    APPEND ks=http://192.168.1.30/kickstart/kickstart_hadoop_nodes.ks initrd=centos/os/x86_64/initrd.img showopts devfs=nomount method=http://192.168.1.30/repos/centos/7/os/x86_64

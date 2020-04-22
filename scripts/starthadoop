@@ -1,0 +1,42 @@
+#!/bin/bash
+#
+# SCRIPT: starthadoop
+#
+
+cssh -n "
+zkServer.sh start
+hadoop-daemon.sh --script hdfs start zkfc
+hadoop-daemon.sh --script hdfs start journalnode
+hadoop-daemon.sh --script hdfs start namenode
+yarn-daemon.sh start resourcemanager
+"
+cssh -d "
+hadoop-daemon.sh --script hdfs start datanode
+yarn-daemon.sh start nodemanager
+"
+
+sleep 2
+
+echo
+echo
+cssh "jps | grep -v Jps | sort -k 2"
+echo
+
+sleep 5
+
+echo
+echo
+echo " Testing HDFS with \"hdfs dfs -ls /"
+echo
+hdfs dfs -ls /
+
+sleep 5
+
+echo
+echo
+echo "Testing MR2 & YARN with:"
+echo "   yarn jar /var/lib/hadoop-*/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar pi 16 1000"
+yarn jar /var/lib/hadoop-*/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar pi 16 1000
+echo
+
+

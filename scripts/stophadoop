@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# SCRIPT: stophadoop
+#
+
+cssh -d "
+hadoop-daemon.sh --script hdfs stop datanode
+yarn-daemon.sh stop nodemanager
+"
+
+     cssh -n "
+hadoop-daemon.sh --script hdfs stop namenode
+hadoop-daemon.sh --script hdfs stop journalnode
+yarn-daemon.sh stop resourcemanager
+#mr-jobhistory-daemon.sh stop historyserver
+hadoop-daemon.sh --script hdfs stop zkfc
+zkServer.sh stop
+"
+echo
+echo
+cssh "jps | grep -v Jps | sort -k 2"
+echo
+
+

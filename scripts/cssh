@@ -1,0 +1,165 @@
+#!/bin/bash
+#
+# SCRIPT: cssh - cluster ssh command
+#
+# HISTORY:      12/10/2015 - Created - Greg Palmer
+#
+# NOTES:        BEFORE USE:
+#
+#               1) Setup the servers for passwordless SSH with the command:
+#                  ./cssh --setup
+#
+#               2) Modify these cluster node hostname templates and
+#                  use the [] characters as template variables
+#                  Examples: c1dn[]   -> evaluates to: c1dn1 
+#                            c1nn[]   -> evaluates to: c1nn1 
+#
+
+SSH_KEY=$HOME/.ssh/id_rsa_cssh
+
+EDGE_NODES_HOSTNAME_TEMPLATE="c1en[]"
+NUM_EDGE_NODES=1
+
+NAME_NODES_HOSTNAME_TEMPLATE="c1nn[]"
+NUM_NAME_NODES=3
+
+DATA_NODES_HOSTNAME_TEMPLATE="c1dn[]"
+NUM_DATA_NODES=5
+
+#
+#
+
+# create list of edge nodes i.e. c1en1 c1en2 
+for (( n=1; n<=$NUM_EDGE_NODES; n++ ))
+do
+    next_num="${n}"
+        edge_nodes="$edge_nodes ${EDGE_NODES_HOSTNAME_TEMPLATE/\[\]/$next_num}"
+done
+
+# create list of name nodes i.e. c1nn1 c1nn2 
+for (( n=1; n<=$NUM_NAME_NODES; n++ ))
+do
+    next_num="${n}"
+        name_nodes="$name_nodes ${NAME_NODES_HOSTNAME_TEMPLATE/\[\]/$next_num}"
+done
+
+# create list of data nodes i.e. c1dn1 c1dn2 c1dn3
+for (( n=1; n<=$NUM_DATA_NODES; n++ ))
+do
+    next_num="${n}"
+        data_nodes="$data_nodes ${DATA_NODES_HOSTNAME_TEMPLATE/\[\]/$next_num}"
+done
+
+# FUNCTION usage()
+function usage {
+        echo
+        echo " Usage: cssh [--help | --setup | -e | -n | -d ] <remote command> "
+        echo "          Where --setup means setup the passwordless ssh environment"
+        echo "          Where -e means only run command on edge nodes "
+        echo "          Where -n means only run command on name nodes "
+        echo "          Where -d means only run command on data nodes "
+        echo
+        echo "    Examples: cssh \"ps -ef\" "
+        echo "              cssh -e \"ps -ef\" "
+        echo "              cssh -n \"ps -ef\" "
+        echo "              cssh -d \"ps -ef\" "
+        echo "              cssh --setup "
+        echo
+
+        exit
+}
+
+if [ $# -eq 0 ]
+then
+    echo
+        echo " cssh: No arguments supplied - exiting. "
+        usage
+fi
+
+echo
+
+if [ $# -eq 1 ]
+then
+        # 1 arg supplied, either the -i arg or the remote command
+
+        if [ "$1" == "--help" ] || [ "$1" == "-h" ]
+        then
+		usage
+
+        elif [ "$1" == "--setup" ]
+        then
+                echo
+                echo " --setup option specified. Setting up the passwordless SSH environment"
+                echo
+                echo " Generating $SSH_KEY and $SSH_KEY.pub files"
+                mkdir -p ~/.ssh
+                ssh-keygen -f $SSH_KEY -t rsa -N '' # no passphrase
+
+                echo
+                echo " Copying $SSH_KEY.pub file to all cluster nodes. Enter the root password for each node."
+                echo
+
+                servers=`echo $edge_nodes $name_nodes $data_nodes`
+
+                for s in $servers
+                do
+			echo " Running ssh-copy-id to host: $s"
+                        ssh-copy-id -o "StrictHostKeyChecking no" -i $SSH_KEY.pub $s &>/dev/null
+                done
+
+                echo
+                echo " Passwordless SSH setup complete. Test with the command: ./cssh hostname "
+                echo
+                exit
+        else
+                # only argument is a remote command to run on all cluster nodes
+        	servers=`echo $edge_nodes $name_nodes $data_nodes`
+                cmd=$1
+        fi
+elif [ $# -eq 2 ]
+then
+        # 2 args supplied, 1 remote command, 1 server type specification
+        if [ "$1" == "-e" ]
+        then
+                servers=`echo $edge_nodes`
+                cmd=$2
+        elif [ "$1" == "-n" ]
+        then
+                servers=`echo $name_nodes`
+                cmd=$2
+        elif [ "$1" == "-d" ]
+        then
+                servers=`echo $data_nodes`
+                cmd=$2
+        else
+                echo " cssh: Invalid argument: $1 - exiting."
+                usage
+        fi
+fi
+
+# Execute the Remote SSH command
+
+# If command has an ampersand at the end of it, run ssh in background
+if [[ "$cmd" == *"&" ]]
+then
+    cmd=`echo $cmd | sed 's/&//g' `
+
+    for s in `echo $servers `
+    do
+        echo
+        echo " -- $s -- "
+        echo " Running command in background: \"$cmd\" "
+        nohup `ssh -i $SSH_KEY -o StrictHostKeyChecking=no $s "$cmd" ` >/dev/null 2>&1 &
+    done
+    echo
+else
+    for s in `echo $servers `
+    do
+        echo
+        echo " -- $s -- "
+        ssh -i $SSH_KEY -o StrictHostKeyChecking=no $s "$cmd"
+    done
+    echo
+fi
+
+# end of script

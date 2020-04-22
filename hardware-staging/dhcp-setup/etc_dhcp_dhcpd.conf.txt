@@ -1,0 +1,15 @@
+allow booting;
+allow bootp;
+
+# Next Server is really only needed if the TFTP server is not running
+# on the same server as the DHCP server
+#next-server 10.0.0.30;
+
+# Name of file to upload from the next-server server
+filename "/pxelinux.0";
+
+#subnet 10.0.0.0 netmask 255.255.255.0 {
+#   range 10.0.0.110 10.0.0.130;
+subnet 192.168.1.0 netmask 255.255.255.0 {
+   range 192.168.1.110 192.168.1.130;
+}

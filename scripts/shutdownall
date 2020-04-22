@@ -1,0 +1,11 @@
+#!/bin/bash
+#
+# SCRIPT: shutdownall
+#
+
+stophadoop
+
+cssh "shutdown -h 5 "
+
+shutdown -h 0
+

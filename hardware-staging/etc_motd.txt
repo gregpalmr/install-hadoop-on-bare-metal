@@ -1,0 +1,39 @@
+###################################################################
+##
+## Welcome to the Mesos Cluster Staging Server - staging1
+##
+## You can find the DHCP setup in:
+##
+##   /etc/dhcp/dhcpd.conf
+##
+## You can find the PXE boot setup in:
+##
+##   /var/www/html/kickstart
+##   /var/lib/tftpboot
+##
+## You can find the CentOS 7 Yum Repos in:
+##
+##   /var/www/html/repos/centos
+##   /var/www/html/repos/epel
+##
+## Update the CentOS repo mirrors with these instructions:
+##
+##   https://www.tecmint.com/setup-local-http-yum-repository-on-centos-7/
+##
+##   Summary:
+##
+##	yum install createrepo  yum-utils
+##      mkdir -p /var/www/html/repos/{base,centosplus,extras,updates}
+##
+##      reposync -g -l -d -m --repoid=base --newest-only --download-metadata --download_path=/var/www/html/repos/
+##      reposync -g -l -d -m --repoid=centosplus --newest-only --download-metadata --download_path=/var/www/html/repos/
+##      reposync -g -l -d -m --repoid=extras --newest-only --download-metadata --download_path=/var/www/html/repos/
+##      reposync -g -l -d -m --repoid=updates --newest-only --download-metadata --download_path=/var/www/html/repos/
+##      reposync -g -l -d -m --repoid=epel --newest-only --download-metadata --download_path=/var/www/html/repos/
+##
+##	createrepo -g comps.xml /var/www/html/repos/centos/7/os/x86_64/
+##	createrepo -g comps.xml /var/www/html/repos/centos/7/centosplus/x86_64/
+##	createrepo -g comps.xml /var/www/html/repos/centos/7/extras/x86_64/
+##	createrepo -g comps.xml /var/www/html/repos/centos/7/updates/x86_64/
+##
+###################################################################
