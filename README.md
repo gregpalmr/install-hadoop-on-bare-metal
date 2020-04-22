@@ -105,12 +105,13 @@ In this section, you will be running the cssh script commands from your edge nod
 
 This old way (RHEL 6) doesn't work in RHEL 7
 
-     # cssh "echo never > cat /sys/kernel/mm/transparent_hugepage/enabled"
+     $ cssh "echo never > cat /sys/kernel/mm/transparent_hugepage/enabled"
 
 RHEL 7 can tune THP with the tuned system service
 
      $ cssh "mkdir -p /etc/tuned/nothp_profile"
 
+```
      $ cssh "
 cat > /etc/tuned/nothp_profile/tuned.conf <<EOF
 [main]
@@ -120,6 +121,7 @@ include= throughput-performance
 transparent_hugepages=never
 EOF
 "
+```
      $ cssh "chmod +x /etc/tuned/nothp_profile/tuned.conf"
 
      $ cssh "tuned-adm profile nothp_profile"
@@ -452,7 +454,7 @@ EOF
      done
 
      # DATA NODES
-     for i in {1..5} # data nodes
+     for i in {1..10} # data nodes
      do
        for svc in hdfs yarn mapred hive hbase HTTP
        do
@@ -494,7 +496,7 @@ EOF
      done
 
      # DATA NODES
-     for i in {1..5} # data nodes
+     for i in {1..10} # data nodes
      do
        for svc in hdfs yarn mapred
        do
@@ -540,7 +542,7 @@ EOF
        done
      done
 
-     for i in {1..5} # data nodes
+     for i in {1..10} # data nodes
      do
        for svc in hdfs yarn mapred
        do
