@@ -44,9 +44,7 @@ Edit the cssh bash script file.
 Change the following shell script lines to use template matching strings that reflect the naming convention of your servers' hostnames. For example, if the hostnames of your master nodes are:
 
      hadoopcluster1namenode1.mydomain.com
-
      hadoopcluster1namenode2.mydomain.com
-
      hadoopcluster1namenode3.mydomain.com
 
 then you would define the EDGE_NODES_HOSTNAME_TEMPLATE shell variable as:
