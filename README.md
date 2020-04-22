@@ -89,6 +89,18 @@ If you don't have an existing SSL key for SSH sessions, you can use this cssh sc
 
 It will prompt you for the password of your current logged in user as it copies the SSL key to each server.
 
+Test the configured cssh script. It should run the hostname command on all the hosts:
+
+     $ cssh hostname
+
+Test the configured cssh script. It should run the hostname command on the name nodes:
+
+     $ cssh -n hostname
+
+Test the configured cssh script. It should run the hostname command on the data nodes:
+
+     $ cssh -d hostname
+
 ## Step 2.  Prepare the Bare-metal servers for the Hadoop install
 
 In this section, you will be running the cssh script commands from your edge node server.
@@ -642,8 +654,11 @@ Start the zookeeper daemons as the zookeeper user
 ## Step 3. Install Apache Hadoop
 
 SEE: 
+
 https://hadoop.apache.org/docs/r2.10.0/hadoop-project-dist/hadoop-common/ClusterSetup.html
+
 https://hadoop.apache.org/docs/r2.10.0/hadoop-project-dist/hadoop-common/SecureMode.html
+
 BOOK: Practical Hadoop Security By Bhushan Lakhe 
 
 ### a. Setup Hadoop environment variables 
@@ -744,7 +759,7 @@ Setup the configuration file: /etc/hadoop/conf/hadoop-env.sh
 Setup the configuration file: /etc/hadoop/conf/core-site.xml
 
 ```
-     $ cssh "echo '
+$ cssh "echo '
 <configuration>
 
   <property>
@@ -856,7 +871,7 @@ $ cssh "echo '
 </configuration>
 ' > \$HADOOP_CONF_DIR/ssl-server.xml"
 ```
-Setup the configuration file: /etc/hadoop/conf/ssl-server.xml
+Setup the configuration file: /etc/hadoop/conf/ssl-client.xml
      
 ```
 $ cssh "echo '
