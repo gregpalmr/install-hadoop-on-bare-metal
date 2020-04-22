@@ -37,9 +37,11 @@ To begin using these utilities, you must configure the scripts to know what host
 
 ### b. Modify the cssh script to use hostname templates that resolve to your hostnames.
 
+Edit the cssh bash script file.
+
      $ vi cssh
 
-     Change the following shell script lines to use template matching strings that reflect the naming convention of your servers' hostnames. For example, if the hostnames of your master nodes are:
+Change the following shell script lines to use template matching strings that reflect the naming convention of your servers' hostnames. For example, if the hostnames of your master nodes are:
 
      hadoopcluster1namenode1.mydomain.com
 
