@@ -38,9 +38,6 @@ authconfig --enableshadow --passalgo=sha512
 #
 rootpw --iscrypted $1$6DFnPiED$DNnpY8ThyhnQnyVnI5.yw.
 
-# Password : mesosroot
-#rootpw --iscrypted $1$YS5nY$bRFWqKJMUT4pD0C7SnFLK1 
-
 firewall --disabled
 selinux  --disabled
 
@@ -724,7 +721,7 @@ yum clean all
 #
 %include /mnt/sysimage/root/hadoop_kickstart/convert_network_to_static_ip.ks
 
-# Add nogroup to cluster node for Mesos use
+# Add nogroup to cluster node 
 groupadd nogroup
 
 # Update all the packages
